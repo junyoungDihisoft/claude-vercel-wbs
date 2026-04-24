@@ -46,7 +46,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Issue #9 에서 PRODUCTION_DATABASE_URL secret 을 등록하기 전까지는
+      # 이 스텝이 no-op 로 끝난다. secret 이 비어 있으면 drizzle-kit 이
+      # 호출되지 않아 이전(#1~#7) PR 머지마다 이 워크플로우가 실패하지 않는다.
+      # #9 에서 secret 등록과 함께 아래 가드(첫 다섯 줄)를 제거할 것.
       - name: Apply Drizzle migrations
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-        run: npx drizzle-kit migrate
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::PRODUCTION_DATABASE_URL 미설정 — 이슈 #9 완료 전이라 마이그레이션을 건너뜁니다."
+            exit 0
+          fi
+          npx drizzle-kit migrate
