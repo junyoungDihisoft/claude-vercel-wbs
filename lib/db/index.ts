@@ -1,8 +1,20 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
-// Supabase Transaction pooler 호환을 위해 prepared statement 비활성화.
-// (CLAUDE.md §5 — 런타임은 Transaction pooler 6543을 쓴다.)
-const client = postgres(process.env.DATABASE_URL!, { prepare: false });
+type DbClient = ReturnType<typeof drizzle>;
 
-export const db = drizzle(client);
+let cached: DbClient | null = null;
+
+// Supabase Transaction pooler(6543) 호환을 위해 prepare:false (CLAUDE.md §5).
+// 커넥션은 첫 호출 시점에 lazy-create — import 단계에서는 DATABASE_URL 을 요구하지 않는다.
+export function getDb(): DbClient {
+  if (cached) return cached;
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      'DATABASE_URL is not set. .env.local 을 supabase status 출력으로 채워주세요.',
+    );
+  }
+  cached = drizzle(postgres(url, { prepare: false }));
+  return cached;
+}
