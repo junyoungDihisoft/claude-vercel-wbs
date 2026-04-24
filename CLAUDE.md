@@ -270,6 +270,10 @@ export default defineConfig({
 |---|---|
 | `/setup-dev-environment` | 로컬 의존성 진단 + 설치/가입/로그인 가이드 |
 | `/dev-server` | Supabase 컨테이너 + Next.js 개발 서버 기동 |
+| `/plan-issue` | 이슈 번호로 SPEC·USER_JOURNEY 근거 TDD 구현 계획 수립 (구현은 안 함) |
+| `/raise-pr` | 완료된 로컬 브랜치 push → PR 생성 → CI 감시 → 이슈 체크박스 갱신 |
+| `/multi-agent-review` | PR을 품질·보안·테스트 세 관점으로 병렬 리뷰 + 교차 검증 |
+| `/manual-test` | Playwright MCP로 USER_JOURNEY J1~J17 수동 회귀 + 스크린샷 증적 |
 
 ### 프로젝트 MCP (`.mcp.json`)
 
