@@ -11,9 +11,9 @@ export function getDb(): DbClient {
   if (cached) return cached;
   const url = process.env.DATABASE_URL;
   if (!url) {
-    throw new Error(
-      'DATABASE_URL is not set. .env.local 을 supabase status 출력으로 채워주세요.',
-    );
+    // 사용자-facing 에러는 generic 으로. 로컬 파일 경로(.env.local) 같은
+    // 환경 힌트는 README/CLAUDE.md 로 분리한다 (정보 노출 최소화).
+    throw new Error('DATABASE_URL is not configured');
   }
   cached = drizzle(postgres(url, { prepare: false }));
   return cached;
