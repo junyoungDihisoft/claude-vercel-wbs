@@ -12,11 +12,10 @@ dist/
 
 # ── Environment (never commit) ────────────────────────────
 # CLAUDE.md §10 참조: .env.local 은 supabase status / vercel env 로부터 재생성.
+# .env.example 만 의도적으로 추적할 경우 `!.env.example` 로 화이트리스트.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+.envrc
 
 # ── Testing ───────────────────────────────────────────────
 coverage/

@@ -264,6 +264,18 @@ export default defineConfig({
 | `USER_JOURNEY.md` | 테스터 / Claude | Given/When/Then 시나리오 — 테스트·수동 검증 근거 |
 | `CLAUDE.md` (이 파일) | Claude Code | 스택 · 워크플로우 · 금기사항 |
 
+### Claude Code 프로젝트 설정 (`.claude/settings.json`)
+
+- 역할: `permissions.deny`로 빌드 산출물·lock·`.git/**`·`.omc/**`·`.env*`·시크릿 파일 패턴(`*.pem`, `id_rsa*`, `.aws/**` 등)의 **`Read`만** 차단 → 후속 세션 컨텍스트 토큰 절감.
+- 보호 레이어: 본 가드는 **에이전트 컨텍스트 토큰용**이고 §10의 런타임 시크릿 보호(service role key 미번들 등)를 대체하지 않는다. Bash `cat`/`head` 우회는 별도 후속 이슈.
+- Local override: `.claude/settings.local.json`의 `permissions.allow`가 본 가드를 무력화할 수 있으므로 시크릿/`.env*`를 local allow에 넣지 말 것.
+- 의도적 비차단: `drizzle/*.sql`(마이그레이션 리뷰), `.github/workflows/**`(보안 리뷰), `package.json`(스크립트/deps), 소스 코드 전부.
+- 차단된 경로의 회피 절차:
+  - Playwright 실패 trace: `gh run download <run-id> --dir tmp-trace` → `npx playwright show-report tmp-trace`
+  - Git 내부 정보: Bash `git log -p` / `git show <sha>` / `git blame <file>`
+  - Drizzle 메타 충돌: `Read(drizzle/meta/**)` deny 줄을 임시 삭제 → 확인 후 복원 (JSON 주석 불가)
+  - lock 해시 검증: `git show :package-lock.json` (Bash 경유)
+
 ### 내장 슬래시 스킬 (`.claude/skills/`)
 
 | 슬래시 명령 | 언제 사용 |
