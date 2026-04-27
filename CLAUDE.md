@@ -286,6 +286,7 @@ export default defineConfig({
 | `/raise-pr` | 완료된 로컬 브랜치 push → PR 생성 → CI 감시 → 이슈 체크박스 갱신 |
 | `/multi-agent-review` | PR을 품질·보안·테스트 세 관점으로 병렬 리뷰 + 교차 검증 |
 | `/manual-test` | Playwright MCP로 USER_JOURNEY J1~J17 수동 회귀 + 스크린샷 증적 |
+| `/exec-plan` | `~/.claude/plans/`의 기존 플랜 파일을 plan mode 재진입 없이 즉시 실행 |
 
 ### Claude Code 설정 (`.claude/`)
 
