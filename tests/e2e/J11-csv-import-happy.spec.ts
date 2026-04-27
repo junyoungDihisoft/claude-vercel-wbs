@@ -41,15 +41,16 @@ test.describe('J11 — CSV 가져오기 정상', () => {
     await expect(page.getByText('3개 작업을 추가합니다')).toBeVisible();
     await expect(page.getByText('제외 0건')).toBeVisible();
 
-    // 적용
+    // 적용 → 모달 닫힘 대기
     await page.getByRole('button', { name: '적용' }).click();
+    await expect(page.getByRole('dialog')).not.toBeVisible();
 
-    // 기존 2개 + 신규 3개 = 5개 이상 존재
-    await expect(page.getByText(`J11 기존A ${ts}`)).toBeVisible();
-    await expect(page.getByText(`J11 기존B ${ts}`)).toBeVisible();
-    await expect(page.getByText(p)).toBeVisible();
-    await expect(page.getByText(c)).toBeVisible();
-    await expect(page.getByText(r)).toBeVisible();
+    // 기존 2개 + 신규 3개 존재 (exact: true 로 badge 오매칭 방지)
+    await expect(page.getByText(`J11 기존A ${ts}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`J11 기존B ${ts}`, { exact: true })).toBeVisible();
+    await expect(page.getByText(p, { exact: true })).toBeVisible();
+    await expect(page.getByText(c, { exact: true })).toBeVisible();
+    await expect(page.getByText(r, { exact: true })).toBeVisible();
 
     // 자식 행이 부모 아래 들여쓰기로 표시됨 (▼ 아이콘 확인)
     const parentRow = page.getByRole('row').filter({ hasText: p });
