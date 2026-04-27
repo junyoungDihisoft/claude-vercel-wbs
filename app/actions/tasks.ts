@@ -4,6 +4,8 @@ import { getDb } from '@/lib/db';
 import { tasks } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { deriveStatusFromProgress } from '@/lib/tasks/derive-status';
+import type { TaskStatus } from '@/lib/types';
 
 export type TaskFormData = {
   title: string;
@@ -68,12 +70,14 @@ export async function createTask(data: TaskFormData): Promise<ActionResult> {
       return { success: false, error: '상위 작업을 찾을 수 없습니다.' };
   }
   try {
+    const progress = data.progress ?? 0;
+    const status = deriveStatusFromProgress(progress, (data.status ?? 'todo') as TaskStatus);
     await db.insert(tasks).values({
       title: data.title.trim(),
       description: data.description ?? null,
       assignee: data.assignee ?? null,
-      status: data.status ?? 'todo',
-      progress: data.progress ?? 0,
+      status,
+      progress,
       startDate: data.startDate ?? null,
       dueDate: data.dueDate ?? null,
       parentId: data.parentId ?? null,
@@ -95,14 +99,16 @@ export async function updateTask(
   if (err) return { success: false, error: err };
   try {
     const db = getDb();
+    const progress = data.progress ?? 0;
+    const status = deriveStatusFromProgress(progress, (data.status ?? 'todo') as TaskStatus);
     await db
       .update(tasks)
       .set({
         title: data.title.trim(),
         description: data.description ?? null,
         assignee: data.assignee ?? null,
-        status: data.status ?? 'todo',
-        progress: data.progress ?? 0,
+        status,
+        progress,
         startDate: data.startDate ?? null,
         dueDate: data.dueDate ?? null,
         updatedAt: new Date(),
@@ -139,4 +145,34 @@ export async function countChildren(parentId: string): Promise<number> {
     .from(tasks)
     .where(eq(tasks.parentId, parentId));
   return children.length;
+}
+
+const STATUS_CYCLE: Record<TaskStatus, TaskStatus> = {
+  todo: 'doing',
+  doing: 'done',
+  done: 'todo',
+};
+
+// 상태 배지 인라인 순환 전환 — 진행률은 건드리지 않는다 (역방향 동기화 금지)
+export async function cycleTaskStatus(id: string): Promise<ActionResult> {
+  if (!UUID_RE.test(id)) return { success: false, error: '작업 ID가 올바르지 않습니다.' };
+  try {
+    const db = getDb();
+    const [row] = await db
+      .select({ status: tasks.status })
+      .from(tasks)
+      .where(eq(tasks.id, id))
+      .limit(1);
+    if (!row) return { success: false, error: '작업을 찾을 수 없습니다.' };
+    const next = STATUS_CYCLE[row.status as TaskStatus] ?? 'todo';
+    await db
+      .update(tasks)
+      .set({ status: next, updatedAt: new Date() })
+      .where(eq(tasks.id, id));
+    revalidatePath('/');
+    return { success: true };
+  } catch (err) {
+    console.error('[cycleTaskStatus] failed', { msg: (err as Error).message });
+    return { success: false, error: '상태 변경에 실패했습니다.' };
+  }
 }
