@@ -25,7 +25,8 @@ function dataLines(csv: string): string[] {
   return csv
     .slice(BOM.length)
     .split('\n')
-    .filter((l) => l.trim() !== '');
+    .map((l) => l.trimEnd()) // papaparse 는 CRLF 출력 — \r 제거
+    .filter((l) => l !== '');
 }
 
 describe('buildCsv', () => {
