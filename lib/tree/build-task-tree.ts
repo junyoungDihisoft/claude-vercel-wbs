@@ -1,3 +1,4 @@
+import 'server-only';
 import type { Task } from '@/lib/types';
 
 export type TaskNode = {

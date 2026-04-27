@@ -57,8 +57,17 @@ function validate(data: TaskFormData): string | null {
 export async function createTask(data: TaskFormData): Promise<ActionResult> {
   const err = validate(data);
   if (err) return { success: false, error: err };
+  const db = getDb();
+  if (data.parentId) {
+    const parent = await db
+      .select({ id: tasks.id })
+      .from(tasks)
+      .where(eq(tasks.id, data.parentId))
+      .limit(1);
+    if (parent.length === 0)
+      return { success: false, error: '상위 작업을 찾을 수 없습니다.' };
+  }
   try {
-    const db = getDb();
     await db.insert(tasks).values({
       title: data.title.trim(),
       description: data.description ?? null,

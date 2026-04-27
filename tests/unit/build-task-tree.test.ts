@@ -63,9 +63,27 @@ describe('buildTaskTree', () => {
     expect(result[0]).toMatchObject({ task: orphan, depth: 0 });
   });
 
-  it('사이클이 있어도 무한 루프 없이 종료', () => {
+  it('사이클(a→b, b→a) — dfs(null) 진입 시 빈 배열로 즉시 종료', () => {
     const a = makeTask({ id: 'a', parentId: 'b' });
     const b = makeTask({ id: 'b', parentId: 'a' });
-    expect(() => buildTaskTree([a, b])).not.toThrow();
+    const result = buildTaskTree([a, b]);
+    expect(result).toHaveLength(0); // 두 노드 모두 루트가 아니므로 출력 없음
+  });
+
+  it('자기참조(parentId === 자신 id) — 루트로 승격되지 않아 출력 없음', () => {
+    const a = makeTask({ id: 'a', parentId: 'a' });
+    const result = buildTaskTree([a]);
+    expect(result).toHaveLength(0);
+  });
+
+  it('중복 ID 입력 — visited 가드 실행으로 무한 루프 없이 종료', () => {
+    // root(parentId=null) → child(parentId='root') → root(parentId='child') 중복 ID
+    // dfs가 child의 자식으로 'root'를 방문하려 할 때 visited에 이미 있어 건너뜀
+    const root = makeTask({ id: 'root', parentId: null, createdAt: new Date('2026-01-01') });
+    const child = makeTask({ id: 'child', parentId: 'root', createdAt: new Date('2026-01-02') });
+    const rootAgain = makeTask({ id: 'root', parentId: 'child', createdAt: new Date('2026-01-03') });
+    expect(() => buildTaskTree([root, child, rootAgain])).not.toThrow();
+    const result = buildTaskTree([root, child, rootAgain]);
+    expect(result.map((n) => n.task.id)).toEqual(['root', 'child']);
   });
 });
