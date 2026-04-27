@@ -275,6 +275,11 @@ export default defineConfig({
 | `/multi-agent-review` | PR을 품질·보안·테스트 세 관점으로 병렬 리뷰 + 교차 검증 |
 | `/manual-test` | Playwright MCP로 USER_JOURNEY J1~J17 수동 회귀 + 스크린샷 증적 |
 
+### Claude Code 설정 (`.claude/`)
+
+- `.claude/settings.json` — 프로젝트 공용 `permissions.deny` 규칙(빌드 산출물·lock 파일·env·VCS 내부 등 Read 차단). 컨텍스트 토큰 절감용. 커밋 대상.
+- `.claude/settings.local.json` — 개인 오버라이드(`.gitignore` 등록됨, 커밋 금지).
+
 ### 프로젝트 MCP (`.mcp.json`)
 
 - `context7` — Next.js/Supabase/Drizzle 라이브러리 최신 문서 인용
