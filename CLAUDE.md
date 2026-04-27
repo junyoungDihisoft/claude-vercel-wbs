@@ -264,6 +264,10 @@ export default defineConfig({
 | `USER_JOURNEY.md` | 테스터 / Claude | Given/When/Then 시나리오 — 테스트·수동 검증 근거 |
 | `CLAUDE.md` (이 파일) | Claude Code | 스택 · 워크플로우 · 금기사항 |
 
+### Claude Code 프로젝트 설정 (`.claude/settings.json`)
+
+빌드 산출물 · lock 파일 · `.git/**` · `.omc/**` · `.env*` 등 **읽어도 가치 없거나 비밀이 담긴 경로**를 `permissions.deny`로 차단해 컨텍스트 토큰 낭비를 줄인다. `Read` 툴에만 적용되며 Bash `cat` 등 우회는 별도 후속 과제. `drizzle/*.sql`·`.github/workflows/**`·소스 코드는 의도적으로 차단하지 않는다(리뷰 필수).
+
 ### 내장 슬래시 스킬 (`.claude/skills/`)
 
 | 슬래시 명령 | 언제 사용 |
