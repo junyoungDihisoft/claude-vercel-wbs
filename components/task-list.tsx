@@ -1,11 +1,15 @@
 'use client';
 
 import { Box, Button, HStack, Table, Text } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { TaskRow } from './task-row';
 import { TaskFormModal } from './task-form-modal';
 import { DeleteConfirmDialog } from './delete-confirm-dialog';
+import { CsvImportModal } from './csv-import-modal';
 import { countChildren } from '@/app/actions/tasks';
+import { buildCsv } from '@/lib/csv/build';
+import { parseCsv } from '@/lib/csv/parse';
+import type { ParsedCsv } from '@/lib/csv/types';
 import type { Task } from '@/lib/types';
 import type { TaskNode } from '@/lib/tree/build-task-tree';
 
@@ -22,6 +26,9 @@ export function TaskList({ nodes }: TaskListProps) {
   const [childCount, setChildCount] = useState(0);
   // 접힌 부모 id 셋 (클라이언트 state, 새로고침 시 초기화)
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [parsedCsv, setParsedCsv] = useState<ParsedCsv | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddClick = () => {
     setParentId(null);
@@ -69,6 +76,37 @@ export function TaskList({ nodes }: TaskListProps) {
     setChildCount(0);
   };
 
+  const handleExportClick = () => {
+    const csv = buildCsv(nodes);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wbs-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // 같은 파일 재선택 허용
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target?.result as string;
+      const existingTitles = new Set(nodes.map((n) => n.task.title));
+      const result = parseCsv(text, existingTitles);
+      setParsedCsv(result);
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+
   // 조상 중 하나라도 접혀 있으면 해당 행은 렌더 스킵
   // nodes는 DFS 순서이므로 앞에 나온 부모가 collapsed에 있으면 자손을 가린다.
   // 각 노드의 task.parentId 체인을 거슬러 올라가는 대신, DFS 순서를 이용해
@@ -92,12 +130,19 @@ export function TaskList({ nodes }: TaskListProps) {
         <Button size="sm" colorPalette="blue" onClick={handleAddClick}>
           + 작업 추가
         </Button>
-        <Button size="sm" variant="outline" disabled>
+        <Button size="sm" variant="outline" onClick={handleExportClick}>
           CSV 내보내기
         </Button>
-        <Button size="sm" variant="outline" disabled>
+        <Button size="sm" variant="outline" onClick={handleImportClick}>
           CSV 불러오기
         </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
       </HStack>
 
       {nodes.length === 0 ? (
@@ -152,6 +197,13 @@ export function TaskList({ nodes }: TaskListProps) {
           onClose={handleDeleteClose}
           task={deletingTask}
           childCount={childCount}
+        />
+      )}
+
+      {parsedCsv && (
+        <CsvImportModal
+          parsed={parsedCsv}
+          onClose={() => setParsedCsv(null)}
         />
       )}
     </Box>
