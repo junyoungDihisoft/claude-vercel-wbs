@@ -18,13 +18,45 @@ export type TaskFormData = {
 
 export type ActionResult = { success: true } | { success: false; error: string };
 
+const STATUS_VALUES = ['todo', 'doing', 'done'] as const;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function validate(data: TaskFormData): string | null {
+  const title = data.title?.trim() ?? '';
+  if (title.length === 0) return '제목을 입력해 주세요.';
+  if (title.length > 200) return '제목은 200자 이내로 입력해 주세요.';
+
+  if (data.description && data.description.length > 2000)
+    return '설명은 2000자 이내로 입력해 주세요.';
+  if (data.assignee && data.assignee.length > 100)
+    return '담당자는 100자 이내로 입력해 주세요.';
+
+  if (data.status !== undefined && !STATUS_VALUES.includes(data.status))
+    return '유효하지 않은 상태 값입니다.';
+
+  if (data.progress !== undefined) {
+    if (!Number.isInteger(data.progress) || data.progress < 0 || data.progress > 100)
+      return '진행률은 0~100 사이의 정수여야 합니다.';
+  }
+
+  if (data.startDate && !DATE_RE.test(data.startDate))
+    return '시작일 형식이 올바르지 않습니다.';
+  if (data.dueDate && !DATE_RE.test(data.dueDate))
+    return '목표 기한 형식이 올바르지 않습니다.';
+  if (data.startDate && data.dueDate && data.startDate > data.dueDate)
+    return '목표 기한은 시작일 이후여야 합니다.';
+
+  if (data.parentId && !UUID_RE.test(data.parentId))
+    return '상위 작업 ID가 올바르지 않습니다.';
+
+  return null;
+}
+
 export async function createTask(data: TaskFormData): Promise<ActionResult> {
-  if (!data.title.trim()) {
-    return { success: false, error: '제목을 입력해 주세요.' };
-  }
-  if (data.startDate && data.dueDate && data.startDate > data.dueDate) {
-    return { success: false, error: '목표 기한은 시작일 이후여야 합니다.' };
-  }
+  const err = validate(data);
+  if (err) return { success: false, error: err };
   try {
     const db = getDb();
     await db.insert(tasks).values({
@@ -39,7 +71,8 @@ export async function createTask(data: TaskFormData): Promise<ActionResult> {
     });
     revalidatePath('/');
     return { success: true };
-  } catch {
+  } catch (err) {
+    console.error('[createTask] failed', { msg: (err as Error).message });
     return { success: false, error: '작업 생성에 실패했습니다.' };
   }
 }
@@ -48,12 +81,9 @@ export async function updateTask(
   id: string,
   data: TaskFormData,
 ): Promise<ActionResult> {
-  if (!data.title.trim()) {
-    return { success: false, error: '제목을 입력해 주세요.' };
-  }
-  if (data.startDate && data.dueDate && data.startDate > data.dueDate) {
-    return { success: false, error: '목표 기한은 시작일 이후여야 합니다.' };
-  }
+  if (!UUID_RE.test(id)) return { success: false, error: '작업 ID가 올바르지 않습니다.' };
+  const err = validate(data);
+  if (err) return { success: false, error: err };
   try {
     const db = getDb();
     await db
@@ -71,12 +101,14 @@ export async function updateTask(
       .where(eq(tasks.id, id));
     revalidatePath('/');
     return { success: true };
-  } catch {
+  } catch (err) {
+    console.error('[updateTask] failed', { msg: (err as Error).message });
     return { success: false, error: '작업 수정에 실패했습니다.' };
   }
 }
 
 export async function deleteTask(id: string): Promise<ActionResult> {
+  if (!UUID_RE.test(id)) return { success: false, error: '작업 ID가 올바르지 않습니다.' };
   try {
     const db = getDb();
     await db.delete(tasks).where(eq(tasks.id, id));
@@ -84,7 +116,8 @@ export async function deleteTask(id: string): Promise<ActionResult> {
     // 이유: revalidatePath 가 즉시 DOM을 갱신하면 다이얼로그 focus-trap 정리 전에
     // 트리거 요소(삭제 버튼)가 사라져 "@zag-js/focus-trap" 에러가 발생한다.
     return { success: true };
-  } catch {
+  } catch (err) {
+    console.error('[deleteTask] failed', { msg: (err as Error).message });
     return { success: false, error: '작업 삭제에 실패했습니다.' };
   }
 }
