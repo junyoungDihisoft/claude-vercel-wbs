@@ -4,6 +4,8 @@ import { getDb } from '@/lib/db';
 import { tasks } from '@/lib/db/schema';
 import { TaskList } from '@/components/task-list';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const db = getDb();
   const allTasks = await db.select().from(tasks).orderBy(asc(tasks.createdAt));
