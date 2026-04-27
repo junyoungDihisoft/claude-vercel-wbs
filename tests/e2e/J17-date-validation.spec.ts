@@ -17,7 +17,7 @@ test.describe('J17 — 시작일 > 목표 기한 검증', () => {
 
     // 에러 메시지 표시
     await expect(
-      page.getByText('목표 기한은 시작일 이후여야 합니다.'),
+      page.getByText('목표 기한은 시작일 이후여야 합니다.').first(),
     ).toBeVisible();
     // 다이얼로그는 닫히지 않는다
     await expect(page.getByRole('dialog')).toBeVisible();
