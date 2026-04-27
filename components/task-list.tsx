@@ -7,24 +7,36 @@ import { TaskFormModal } from './task-form-modal';
 import { DeleteConfirmDialog } from './delete-confirm-dialog';
 import { countChildren } from '@/app/actions/tasks';
 import type { Task } from '@/lib/types';
+import type { TaskNode } from '@/lib/tree/build-task-tree';
 
 interface TaskListProps {
-  tasks: Task[];
+  nodes: TaskNode[];
 }
 
-export function TaskList({ tasks }: TaskListProps) {
+export function TaskList({ nodes }: TaskListProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [parentId, setParentId] = useState<string | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [childCount, setChildCount] = useState(0);
+  // 접힌 부모 id 셋 (클라이언트 state, 새로고침 시 초기화)
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const handleAddClick = () => {
+    setParentId(null);
+    setEditingTask(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleAddSubtask = (parent: Task) => {
+    setParentId(parent.id);
     setEditingTask(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditClick = (task: Task) => {
+    setParentId(null);
     setEditingTask(task);
     setIsFormOpen(true);
   };
@@ -36,9 +48,19 @@ export function TaskList({ tasks }: TaskListProps) {
     setIsDeleteOpen(true);
   };
 
+  const handleToggleCollapse = (id: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingTask(undefined);
+    setParentId(null);
   };
 
   const handleDeleteClose = () => {
@@ -46,6 +68,23 @@ export function TaskList({ tasks }: TaskListProps) {
     setDeletingTask(null);
     setChildCount(0);
   };
+
+  // 조상 중 하나라도 접혀 있으면 해당 행은 렌더 스킵
+  // nodes는 DFS 순서이므로 앞에 나온 부모가 collapsed에 있으면 자손을 가린다.
+  // 각 노드의 task.parentId 체인을 거슬러 올라가는 대신, DFS 순서를 이용해
+  // "현재 숨김 깊이"를 추적하는 O(n) 방식을 씀.
+  const visibleNodes: TaskNode[] = [];
+  let hiddenDepth: number | null = null;
+
+  for (const node of nodes) {
+    if (hiddenDepth !== null && node.depth > hiddenDepth) continue;
+    hiddenDepth = null;
+
+    if (collapsed.has(node.task.id)) {
+      hiddenDepth = node.depth;
+    }
+    visibleNodes.push(node);
+  }
 
   return (
     <Box>
@@ -61,17 +100,15 @@ export function TaskList({ tasks }: TaskListProps) {
         </Button>
       </HStack>
 
-      {tasks.length === 0 ? (
+      {nodes.length === 0 ? (
         <Box textAlign="center" py={16} color="gray.500">
-          <Text fontSize="lg">아직 작업이 없습니다.</Text>
-          <Text fontSize="sm" mt={2}>
-            + 작업 추가로 시작해 보세요.
-          </Text>
+          <Text fontSize="lg">아직 작업이 없습니다. 첫 작업을 추가해 시작하세요</Text>
         </Box>
       ) : (
         <Table.Root size="sm" variant="line">
           <Table.Header>
             <Table.Row>
+              <Table.ColumnHeader w="32px" />
               <Table.ColumnHeader>제목</Table.ColumnHeader>
               <Table.ColumnHeader>담당자</Table.ColumnHeader>
               <Table.ColumnHeader>상태</Table.ColumnHeader>
@@ -82,12 +119,17 @@ export function TaskList({ tasks }: TaskListProps) {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {tasks.map((task) => (
+            {visibleNodes.map(({ task, depth, hasChildren }) => (
               <TaskRow
                 key={task.id}
                 task={task}
+                depth={depth}
+                hasChildren={hasChildren}
+                isCollapsed={collapsed.has(task.id)}
+                onToggleCollapse={handleToggleCollapse}
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
+                onAddSubtask={handleAddSubtask}
               />
             ))}
           </Table.Body>
@@ -96,10 +138,11 @@ export function TaskList({ tasks }: TaskListProps) {
 
       {isFormOpen && (
         <TaskFormModal
-          key={editingTask?.id ?? 'new'}
+          key={editingTask?.id ?? `new-${parentId}`}
           isOpen={isFormOpen}
           onClose={handleFormClose}
           task={editingTask}
+          parentId={parentId}
         />
       )}
 

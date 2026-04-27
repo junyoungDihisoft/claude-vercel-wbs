@@ -21,9 +21,10 @@ interface TaskFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   task?: Task;
+  parentId?: string | null;
 }
 
-export function TaskFormModal({ isOpen, onClose, task }: TaskFormModalProps) {
+export function TaskFormModal({ isOpen, onClose, task, parentId }: TaskFormModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assignee, setAssignee] = useState('');
@@ -67,6 +68,7 @@ export function TaskFormModal({ isOpen, onClose, task }: TaskFormModalProps) {
       progress: Number(progress) || 0,
       startDate: startDate || null,
       dueDate: dueDate || null,
+      parentId: task ? undefined : (parentId ?? null),
     };
 
     const result = task ? await updateTask(task.id, data) : await createTask(data);
