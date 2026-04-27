@@ -1,6 +1,8 @@
 'use client';
 
-import { Badge, Box, Button, HStack, Table, Text } from '@chakra-ui/react';
+import { Box, Button, HStack, Table, Text } from '@chakra-ui/react';
+import { useTransition } from 'react';
+import { cycleTaskStatus } from '@/app/actions/tasks';
 import type { Task } from '@/lib/types';
 
 const STATUS_CONFIG = {
@@ -30,11 +32,20 @@ export function TaskRow({
   onDelete,
   onAddSubtask,
 }: TaskRowProps) {
+  const [isPending, startTransition] = useTransition();
+
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
     STATUS_CONFIG.todo;
 
   const toggleIcon = hasChildren ? (isCollapsed ? '▶' : '▼') : null;
+
+  const handleCycleStatus = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    startTransition(async () => {
+      await cycleTaskStatus(task.id);
+    });
+  };
 
   return (
     <Table.Row>
@@ -59,9 +70,15 @@ export function TaskRow({
       </Table.Cell>
       <Table.Cell>{task.assignee ?? '—'}</Table.Cell>
       <Table.Cell>
-        <Badge colorPalette={statusConfig.colorPalette} size="sm">
+        <Button
+          size="xs"
+          variant="subtle"
+          colorPalette={statusConfig.colorPalette}
+          disabled={isPending}
+          onClick={handleCycleStatus}
+        >
           {statusConfig.label}
-        </Badge>
+        </Button>
       </Table.Cell>
       <Table.Cell>{task.progress}%</Table.Cell>
       <Table.Cell>{task.startDate ?? '—'}</Table.Cell>
