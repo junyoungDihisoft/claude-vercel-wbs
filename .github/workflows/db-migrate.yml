@@ -23,6 +23,10 @@ on:
       - ".github/workflows/db-migrate.yml"
   workflow_dispatch: # Actions 탭에서 수동 실행 가능
 
+# 최소 권한. 마이그레이션 잡은 외부 secret(DATABASE_URL)만 사용.
+permissions:
+  contents: read
+
 jobs:
   migrate:
     name: drizzle-kit migrate
