@@ -302,3 +302,60 @@ export default defineConfig({
 ### CI/CD (`.github/workflows/`)
 
 - `db-migrate.yml` — `main` 브랜치 push 시 `drizzle-kit migrate`를 `PRODUCTION_DATABASE_URL`에 실행
+
+## 12. 위임 정책 — 스킬과 OMC 서브에이전트
+
+이 저장소의 작업은 **스킬을 사용자 진입점**으로, **무거운 실행은 OMC 서브에이전트에 위임**한다. 목표는 (1) 메인 세션 prompt cache 보존, (2) 모델 스위치 비용 제거, (3) 학습 가시성 유지.
+
+### 진입점 우선순위
+
+1. **스킬이 있으면 스킬을 먼저 사용**한다 (`/plan-issue`, `/exec-plan`, `/raise-pr`, `/multi-agent-review`, `/manual-test`, `/dev-server`, `/setup-dev-environment`).
+2. 스킬이 없는 보조 작업은 **OMC 서브에이전트를 ad-hoc으로 호출**한다.
+3. 1~2줄 trivial 수정은 **메인이 직접** 처리한다 — 학습 가시성을 위해.
+
+### OMC 서브에이전트 라우팅
+
+스킬이 없거나 스킬 내부에서 호출할 때 사용. `Task(subagent_type="oh-my-claudecode:<name>", prompt=…)` 형태.
+
+| 상황 | 호출 |
+|---|---|
+| 코드베이스 광역 탐색 (3+ 위치) | `oh-my-claudecode:explore` (haiku, READ-ONLY) |
+| Plan에 따른 본격 구현 | `oh-my-claudecode:executor` (sonnet) — `/exec-plan`이 자동 호출 |
+| 막혔을 때 root-cause 진단 | `oh-my-claudecode:architect` (opus, READ-ONLY) |
+| 버그 재현·격리 | `oh-my-claudecode:debugger` 또는 `oh-my-claudecode:tracer` |
+| 어수선한 staging의 atomic 커밋 분리 | `oh-my-claudecode:git-master` (sonnet) |
+| 큰 변경 후 독립 검증 | `oh-my-claudecode:verifier` (sonnet) |
+| PR 단위 3관점 리뷰 | `/multi-agent-review` 스킬이 `code-reviewer` + `security-reviewer` + `test-engineer` 3병렬 호출 |
+
+### 모델 스위치 금지
+
+`/plan-issue`(Opus) → `/exec-plan` 흐름에서 **`/model` 명령으로 메인 모델을 바꾸지 말 것.** 모델 스위치는 prompt cache를 무효화해 SPEC.md / USER_JOURNEY.md / 코드 파일을 다시 읽는 비용이 발생한다.
+
+`/exec-plan`이 비-trivial plan을 OMC `executor` 서브에이전트(Sonnet, 자체 컨텍스트)에 자동 위임하므로, 메인 세션은 Opus를 유지한 채 Sonnet 비용 효과만 흡수할 수 있다.
+
+### 핸드오프 규칙
+
+- 서브에이전트 출력은 **요약만** 메인으로 가져온다 (변경 파일 목록, 검증 결과, 다음 단계).
+- 서브에이전트에 넘기는 프롬프트에는 **plan 절대 경로 + CLAUDE.md §6 / §9 / §10 인용**을 포함한다.
+- 서브에이전트가 plan에서 벗어나면 **즉시 멈추고 사용자에게 보고** — 자동 재계획 금지.
+- 같은 슬라이스에서 3회 연속 실패하면 OMC `architect` 서브에이전트로 cross-check 위임 또는 사용자에게 보고.
+
+### 검증 명령 (서브에이전트가 따라야 할 게이트)
+
+서브에이전트에 위임할 때 프롬프트에 박을 검증 명령:
+
+| 단계 | 명령 |
+|---|---|
+| 각 슬라이스 완료마다 | `npm run lint` → `npm test` |
+| 마지막 슬라이스 후 | `npm run build` |
+| 라우팅·UI 계약 변경 시 | `npm run test:e2e` |
+| 스키마 변경 시 | `npm run db:generate` → SQL 리뷰 → `npm run db:migrate` (§6 순서) |
+
+### 예외 — 메인이 직접 처리
+
+다음 경우엔 메인 세션이 직접 작업한다 (서브에이전트 위임 X).
+
+- 1~2줄 trivial fix (오타, import 추가, 한 줄 문구 수정)
+- 사용자가 "직접 해줘"라고 명시한 경우
+- Playwright MCP가 필요한 작업 (`/manual-test` 스킬은 메인 세션에서 브라우저 자동화)
+- 환경 진단·서버 기동 같이 Bash 백그라운드/시그널 모니터링이 필요한 작업 (`/setup-dev-environment`, `/dev-server`)

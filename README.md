@@ -101,6 +101,64 @@ gh auth status
 
 ---
 
+## 🛠 개발 워크플로우 — 스킬 7개로 한 사이클
+
+이 저장소는 **이슈 하나를 끝낼 때마다 같은 7-스텝 사이클**을 돕니다. 모든 스텝은 슬래시 명령으로 시작하고, Claude가 알아서 적절한 OMC 서브에이전트에 위임합니다. 수강생은 명령 이름만 외우면 됩니다.
+
+```
+사이클 시작
+   │
+   ▼
+[1] /setup-dev-environment   ← 최초 1회 (도구 설치·로그인)
+[2] /dev-server              ← 매 세션 시작 (Supabase + Next.js)
+[3] /plan-issue <이슈번호>    ← Opus가 SPEC·USER_JOURNEY·TDD로 plan 작성
+   │      ↓ 사용자 승인
+[4] /exec-plan               ← 큰 plan은 OMC executor에 자동 위임 (Sonnet)
+   │      ↓ (UI 변경이 있으면)
+[5] /manual-test J<x>        ← Playwright로 화면 확인 + 스크린샷 증적
+   │
+[6] /raise-pr                ← push → PR → CI 감시 → 이슈 체크박스 갱신
+   │      ↓ CI 초록불 후
+[7] /multi-agent-review <PR#> ← 품질·보안·테스트 3관점 병렬 리뷰
+   │      ↓ 사용자 머지
+사이클 종료
+```
+
+### 각 스텝의 역할
+
+| # | 명령 | 무엇을 하는가 | 누가 실행 |
+|---|---|---|---|
+| 1 | `/setup-dev-environment` | Node·Docker·Supabase·Vercel·gh 설치/로그인 진단 | 메인 (Opus) |
+| 2 | `/dev-server` | Supabase 컨테이너 + `.env.local` 동기화 + `npm run dev` 기동 | 메인 |
+| 3 | `/plan-issue <N>` | 이슈 → SPEC·USER_JOURNEY 게이트 + TDD 슬라이스 plan을 `~/.claude/plans/`에 저장 | 메인 (Opus, 프로젝트 두뇌) |
+| 4 | `/exec-plan` | plan 실행. 비-trivial은 OMC `executor`(Sonnet)에 자동 위임 | 메인 → executor 자동 위임 |
+| 5 | `/manual-test J<x>` | USER_JOURNEY 시나리오를 브라우저로 시연, 스크린샷 저장 | 메인 (Playwright MCP 필요) |
+| 6 | `/raise-pr` | 로컬 `lint+test+build` → push → PR 본문 → CI 감시 → 이슈 체크박스 | 메인 |
+| 7 | `/multi-agent-review <PR#>` | code-reviewer / security-reviewer / test-engineer 병렬 리뷰 + 교차 검증 | 메인 → 3 OMC 서브에이전트 병렬 |
+
+### 왜 이 구조인가
+
+- **스킬 = 진입점**: 짧은 슬래시 명령만 외우면 됩니다.
+- **OMC 서브에이전트 = 내부 일꾼**: 무거운 구현·리뷰는 자체 컨텍스트의 서브에이전트가 흡수해 메인 토큰을 보존합니다.
+- **모델 스위치 없음**: 메인은 늘 Opus 유지. Sonnet 비용은 `executor` 위임을 통해 자동으로 발생합니다 (`/model` 명령으로 모델을 직접 바꾸지 마세요 — prompt cache가 무효화됩니다).
+- **학습 가시성**: Trivial 수정과 Playwright 시연은 메인이 직접 → 수강생이 단계별로 봅니다. 큰 구현만 위임 → 토큰을 절감합니다.
+
+### "어느 명령을 써야 할지 모르겠다" 디시전 트리
+
+```
+지금 막 클론했다           → /setup-dev-environment
+서버를 띄우고 싶다         → /dev-server
+이슈를 시작한다            → /plan-issue <N>
+plan은 있고 구현만 남았다  → /exec-plan
+화면을 직접 보고 싶다      → /manual-test J<x>
+구현이 끝나서 PR이 필요하다 → /raise-pr
+PR 머지 전 리뷰가 필요하다 → /multi-agent-review <PR#>
+```
+
+> 위임 정책의 자세한 규칙(라우팅 표·핸드오프·예외)은 [`CLAUDE.md` §12](./CLAUDE.md)를 참조하세요. 이 체계를 다른 저장소로 옮기는 방법은 [`docs/PORTABILITY.md`](./docs/PORTABILITY.md)에 정리돼 있습니다.
+
+---
+
 ## WBS 기능 스펙 (MVP)
 
 > **사용자 관점 전체 기능·화면 목업은 [`SPEC.md`](./SPEC.md)에 있습니다.** 여기서는 구현에 필요한 **데이터 모델 필드명**만 정리합니다. UX 동작(버튼 라벨, 목록·간트 화면 구성, Overdue 표시 방식 등)은 SPEC.md를 단일 원천으로 삼으세요.
