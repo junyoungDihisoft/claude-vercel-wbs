@@ -41,6 +41,11 @@ test.describe('J14 — 간트 막대의 진행률 채움', () => {
     await page.getByRole('button', { name: '수정' }).click();
     await waitForDialogClosed(page);
 
+    // 목록 행의 진행률이 30%로 갱신될 때까지 대기 (DB write + revalidate 보장).
+    // 이 단계 없이 곧장 /gantt 로 이동하면 간헐적으로 60% 직후의 정렬·인덱스를
+    // 잡아 fill 셀렉터가 다른 행을 가리키는 race 가 생긴다.
+    await expect(taskRow).toContainText('30%');
+
     // 간트 재진입 → fill width: 30%
     await page.getByRole('link', { name: '간트' }).click();
     await expect(page).toHaveURL(/\/gantt$/);
