@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { waitForDialogClosed } from './_helpers/dialog';
+import { isoDateOffset } from './_helpers/dates';
 
 test.describe('J14 — 간트 막대의 진행률 채움', () => {
   test('진행률 60% → 막대 fill width: 60%, 30%로 변경 후 재진입 시 30%', async ({
@@ -10,8 +11,8 @@ test.describe('J14 — 간트 막대의 진행률 채움', () => {
     const taskTitle = `J14 진행률 ${Date.now()}`;
     await page.getByRole('button', { name: '+ 작업 추가' }).click();
     await page.getByPlaceholder('작업 제목').fill(taskTitle);
-    await page.locator('input[type="date"]').nth(0).fill('2026-05-01');
-    await page.locator('input[type="date"]').nth(1).fill('2026-05-10');
+    await page.locator('input[type="date"]').nth(0).fill(isoDateOffset(3));
+    await page.locator('input[type="date"]').nth(1).fill(isoDateOffset(12));
     await page.getByRole('spinbutton').first().fill('60');
     await page.getByRole('button', { name: '추가' }).click();
     await waitForDialogClosed(page);

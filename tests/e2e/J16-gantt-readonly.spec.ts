@@ -1,15 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { waitForDialogClosed } from './_helpers/dialog';
+import { isoDateOffset } from './_helpers/dates';
 
 test.describe('J16 — 간트는 읽기 전용', () => {
-  test('막대 드래그 시도 후에도 막대 위치/폭이 변하지 않는다', async ({ page }) => {
+  test('막대에 드래그 핸들러가 없고, 드래그/리사이즈 시도 후에도 위치·폭이 그대로다', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     const taskTitle = `J16 읽기전용 ${Date.now()}`;
     await page.getByRole('button', { name: '+ 작업 추가' }).click();
     await page.getByPlaceholder('작업 제목').fill(taskTitle);
-    await page.locator('input[type="date"]').nth(0).fill('2026-05-04');
-    await page.locator('input[type="date"]').nth(1).fill('2026-05-08');
+    await page.locator('input[type="date"]').nth(0).fill(isoDateOffset(6));
+    await page.locator('input[type="date"]').nth(1).fill(isoDateOffset(10));
     await page.getByRole('button', { name: '추가' }).click();
     await waitForDialogClosed(page);
     await expect(page.getByText(taskTitle)).toBeVisible();
@@ -19,6 +22,23 @@ test.describe('J16 — 간트는 읽기 전용', () => {
 
     const bar = page.locator('.gantt-bar').first();
     await expect(bar).toBeVisible();
+
+    // SPEC §9 핵심 계약: 막대에 드래그 관련 핸들러·속성이 일체 없어야 한다.
+    // (boundingBox 동치만 보면 pointer-events:none 같은 CSS 우회로 통과 가능.)
+    await expect(bar).not.toHaveAttribute('draggable', 'true');
+    const handlers = await bar.evaluate((el) => {
+      const e = el as HTMLElement & {
+        onpointerdown: unknown;
+        onmousedown: unknown;
+        ondragstart: unknown;
+      };
+      return {
+        pointerdown: typeof e.onpointerdown === 'function',
+        mousedown: typeof e.onmousedown === 'function',
+        dragstart: typeof e.ondragstart === 'function',
+      };
+    });
+    expect(handlers).toEqual({ pointerdown: false, mousedown: false, dragstart: false });
 
     const before = await bar.boundingBox();
     expect(before).not.toBeNull();

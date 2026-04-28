@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { waitForDialogClosed } from './_helpers/dialog';
+import { isoDateOffset } from './_helpers/dates';
 
 test.describe('J13 — 간트 뷰로 전환', () => {
   test('토글에서 "간트" 클릭 시 /gantt 라우트, 좌측 트리·우측 그리드·오늘 강조선·"일정 없음" 표기', async ({
@@ -7,12 +8,12 @@ test.describe('J13 — 간트 뷰로 전환', () => {
   }) => {
     await page.goto('/');
 
-    // 시작일/기한 모두 있는 작업
+    // 시작일/기한 모두 있는 작업 (오늘 +6d ~ +10d — `computeGridRange` 윈도우 안)
     const tsScheduled = `J13 일정있음 ${Date.now()}`;
     await page.getByRole('button', { name: '+ 작업 추가' }).click();
     await page.getByPlaceholder('작업 제목').fill(tsScheduled);
-    await page.locator('input[type="date"]').nth(0).fill('2026-05-04');
-    await page.locator('input[type="date"]').nth(1).fill('2026-05-08');
+    await page.locator('input[type="date"]').nth(0).fill(isoDateOffset(6));
+    await page.locator('input[type="date"]').nth(1).fill(isoDateOffset(10));
     await page.getByRole('button', { name: '추가' }).click();
     await waitForDialogClosed(page);
     await expect(page.getByText(tsScheduled)).toBeVisible();
