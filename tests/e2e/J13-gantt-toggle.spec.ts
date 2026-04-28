@@ -30,6 +30,16 @@ test.describe('J13 — 간트 뷰로 전환', () => {
     await page.getByRole('link', { name: '간트' }).click();
     await expect(page).toHaveURL(/\/gantt$/);
 
+    // 토글 active 상태가 'aria-current=page' 로 노출됨 (a11y 계약)
+    await expect(page.getByRole('link', { name: '간트' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.getByRole('link', { name: '목록' })).not.toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+
     // 좌측 트리: 두 작업의 제목이 좌측 영역에 보임
     await expect(page.getByText(tsScheduled)).toBeVisible();
     await expect(page.getByText(tsNoDates)).toBeVisible();

@@ -5,12 +5,9 @@ import { tasks } from '@/lib/db/schema';
 import { AppHeader } from '@/components/app-header';
 import { GanttBoard } from '@/components/gantt-board';
 import { buildTaskTree } from '@/lib/tree/build-task-tree';
+import { getTodayIso } from '@/lib/dates/today-iso';
 
 export const dynamic = 'force-dynamic';
-
-function todayIsoSeoul(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
-}
 
 export default async function GanttPage() {
   const db = getDb();
@@ -21,7 +18,7 @@ export default async function GanttPage() {
     <>
       <AppHeader />
       <Container maxW="6xl" py={8}>
-        <GanttBoard nodes={tree} todayIso={todayIsoSeoul()} />
+        <GanttBoard nodes={tree} todayIso={getTodayIso()} />
       </Container>
     </>
   );
