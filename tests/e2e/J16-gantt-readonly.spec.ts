@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForDialogClosed } from './_helpers/dialog';
 
 test.describe('J16 — 간트는 읽기 전용', () => {
   test('막대 드래그 시도 후에도 막대 위치/폭이 변하지 않는다', async ({ page }) => {
@@ -7,10 +8,11 @@ test.describe('J16 — 간트는 읽기 전용', () => {
     const taskTitle = `J16 읽기전용 ${Date.now()}`;
     await page.getByRole('button', { name: '+ 작업 추가' }).click();
     await page.getByPlaceholder('작업 제목').fill(taskTitle);
-    await page.getByLabel('시작일').fill('2026-05-04');
-    await page.getByLabel('목표 기한').fill('2026-05-08');
+    await page.locator('input[type="date"]').nth(0).fill('2026-05-04');
+    await page.locator('input[type="date"]').nth(1).fill('2026-05-08');
     await page.getByRole('button', { name: '추가' }).click();
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await waitForDialogClosed(page);
+    await expect(page.getByText(taskTitle)).toBeVisible();
 
     await page.getByRole('link', { name: '간트' }).click();
     await expect(page).toHaveURL(/\/gantt$/);
