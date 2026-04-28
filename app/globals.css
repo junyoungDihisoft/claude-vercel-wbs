@@ -1,0 +1,339 @@
+/*
+ * 디자인 토큰과 헤더/간트 클래스. Claude Design 핸드오프 번들의 styles.css에서
+ * 본 PR(#7) 범위에 해당하는 부분만 이식. List 뷰 시각·Stats strip·Toast·
+ * 모달 시각은 별도 후속 이슈(#27, #28, #29)로 분리. 간트 막대의 overdue 룰
+ * (.gantt-bar.overdue)은 이슈 #11이 추가하므로 본 파일에 포함하지 않는다.
+ */
+
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f5f5f4;
+  --border: #e7e5e4;
+  --border-2: #d6d3d1;
+  --text: #1c1917;
+  --text-muted: #78716c;
+  --text-faint: #a8a29e;
+
+  --accent: oklch(58% 0.18 264);
+  --accent-soft: oklch(96% 0.02 264);
+  --accent-border: oklch(85% 0.06 264);
+
+  --status-todo-bg: #f5f5f4;
+  --status-todo-fg: #57534e;
+  --status-todo-border: #e7e5e4;
+  --status-doing-bg: oklch(96% 0.04 250);
+  --status-doing-fg: oklch(45% 0.14 250);
+  --status-doing-border: oklch(88% 0.05 250);
+  --status-done-bg: oklch(96% 0.05 150);
+  --status-done-fg: oklch(40% 0.13 150);
+  --status-done-border: oklch(85% 0.07 150);
+
+  --danger: oklch(55% 0.21 27);
+  --danger-bg: oklch(96% 0.03 27);
+  --danger-border: oklch(85% 0.08 27);
+
+  --progress-fill: var(--accent);
+  --progress-track: oklch(92% 0.02 264);
+
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow: 0 1px 3px rgba(28, 25, 23, 0.06), 0 8px 24px -8px rgba(28, 25, 23, 0.08);
+  --shadow-lg: 0 8px 24px -4px rgba(28, 25, 23, 0.12), 0 24px 64px -16px rgba(28, 25, 23, 0.16);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App header */
+.app-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.app-header-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  row-gap: 10px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--text);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.brand-name {
+  font-size: 15px;
+}
+.brand-sub {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  margin-left: 4px;
+}
+
+.view-toggle {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.view-toggle a {
+  padding: 6px 14px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 120ms ease;
+  text-decoration: none;
+}
+.view-toggle a.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-spacer {
+  flex: 1;
+}
+
+/* Gantt board (slice 5에서 사용; overdue 룰은 #11) */
+.gantt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+}
+.gantt-left {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+.gantt-left-head {
+  height: 56px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 1fr 60px;
+  align-items: center;
+}
+.gantt-left-spacer {
+  height: 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.gantt-row-left {
+  display: grid;
+  grid-template-columns: 1fr 60px;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  min-width: 0;
+}
+.gantt-row-left .title-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.gantt-row-left .title-cell .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gantt-row-left.is-done .label {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.gantt-row-left .pct {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+}
+.gantt-row-left .pct .empty {
+  color: var(--text-faint);
+  font-style: italic;
+}
+.row-children-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.gantt-right {
+  position: relative;
+  overflow-x: auto;
+  min-width: 0;
+}
+.gantt-month-row {
+  display: flex;
+  height: 28px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.gantt-month {
+  border-right: 1px solid var(--border);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+}
+.gantt-week-row {
+  display: grid;
+  grid-template-columns: repeat(var(--week-count), var(--week-w));
+  height: 28px;
+}
+.gantt-week {
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.gantt-week.is-current {
+  color: var(--accent);
+  font-weight: 500;
+}
+.gantt-body {
+  position: relative;
+}
+.gantt-grid-row {
+  display: grid;
+  grid-template-columns: repeat(var(--week-count), var(--week-w));
+  height: 40px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.gantt-grid-cell {
+  border-right: 1px solid var(--border);
+}
+.gantt-grid-cell.is-current-week {
+  background: rgba(0, 0, 0, 0.012);
+}
+.gantt-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1.5px solid var(--accent);
+  z-index: 5;
+  pointer-events: none;
+}
+.gantt-today::after {
+  content: '오늘';
+  position: absolute;
+  top: -22px;
+  left: -16px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.gantt-bar {
+  position: absolute;
+  top: 8px;
+  height: 24px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--progress-track);
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+}
+.gantt-bar-fill {
+  height: 100%;
+  background: var(--progress-fill);
+  transition: width 240ms ease;
+}
+.gantt-bar.is-done .gantt-bar-fill {
+  background: var(--status-done-fg);
+}
+.gantt-bar-label {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: 11px;
+  color: var(--text);
+  text-shadow: 0 0 4px var(--surface);
+}
+.gantt-empty-bar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  font-style: italic;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0,
+    transparent 6px,
+    var(--surface-2) 6px,
+    var(--surface-2) 12px
+  );
+  border: 1px dashed var(--border-2);
+  border-radius: 5px;
+  padding: 4px 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
