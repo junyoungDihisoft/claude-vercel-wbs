@@ -77,7 +77,7 @@
 
 **대체 금지.** 아래 스택에서 벗어나려면 반드시 사용자에게 먼저 물어본다.
 
-- **Next.js 14+ (App Router, TypeScript) — 풀스택 프레임워크로 사용**
+- **Next.js 15+ (App Router, TypeScript) — 풀스택 프레임워크로 사용**
   - 이 프로젝트에는 **별도의 백엔드 서버가 없다.** Next.js 하나가 프론트엔드(React Server/Client Components)와 백엔드(Route Handlers `app/api/**/route.ts`, Server Actions)를 모두 담당하고, Vercel에 단일 배포 단위로 올라간다.
   - Express · Fastify · NestJS 같은 별도 Node 서버를 세우지 않는다. DB 쿼리(Drizzle), 비즈니스 로직, 외부 API 호출은 **Server Component 또는 Server Action, Route Handler 안에서** 수행한다.
   - 클라이언트 컴포넌트에서 DB에 직접 접근하지 않는다 — 반드시 서버 측 경계를 경유.
