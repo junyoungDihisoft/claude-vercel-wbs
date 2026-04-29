@@ -337,3 +337,5 @@ body {
   white-space: nowrap;
   pointer-events: none;
 }
+.daterange.has-due-overdue .due { color: var(--danger); font-weight: 500; }
+.overdue-badge { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 6px; }
