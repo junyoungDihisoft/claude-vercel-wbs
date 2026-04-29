@@ -4,6 +4,7 @@ import { Box, Button, HStack, Table, Text } from '@chakra-ui/react';
 import { useTransition } from 'react';
 import { cycleTaskStatus } from '@/app/actions/tasks';
 import type { Task } from '@/lib/types';
+import { isOverdue } from '@/lib/tasks/is-overdue';
 
 const STATUS_CONFIG = {
   todo: { label: '할 일', colorPalette: 'gray' },
@@ -20,6 +21,7 @@ interface TaskRowProps {
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
   onAddSubtask: (task: Task) => void;
+  todayIso: string;
 }
 
 export function TaskRow({
@@ -31,8 +33,10 @@ export function TaskRow({
   onEdit,
   onDelete,
   onAddSubtask,
+  todayIso,
 }: TaskRowProps) {
   const [isPending, startTransition] = useTransition();
+  const overdue = isOverdue(task, todayIso);
 
   const statusConfig =
     STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ??
@@ -82,7 +86,12 @@ export function TaskRow({
       </Table.Cell>
       <Table.Cell>{task.progress}%</Table.Cell>
       <Table.Cell>{task.startDate ?? '—'}</Table.Cell>
-      <Table.Cell>{task.dueDate ?? '—'}</Table.Cell>
+      <Table.Cell>
+        <span className={`daterange ${overdue ? 'has-due-overdue' : ''}`}>
+          <span className="due">{task.dueDate ?? '—'}</span>
+          {overdue && <span className="overdue-badge">지남</span>}
+        </span>
+      </Table.Cell>
       <Table.Cell>
         <HStack gap={1}>
           <Button size="xs" variant="outline" onClick={() => onEdit(task)}>

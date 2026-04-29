@@ -15,9 +15,10 @@ import type { TaskNode } from '@/lib/tree/build-task-tree';
 
 interface TaskListProps {
   nodes: TaskNode[];
+  todayIso: string;
 }
 
-export function TaskList({ nodes }: TaskListProps) {
+export function TaskList({ nodes, todayIso }: TaskListProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [parentId, setParentId] = useState<string | null>(null);
@@ -175,6 +176,7 @@ export function TaskList({ nodes }: TaskListProps) {
                 onEdit={handleEditClick}
                 onDelete={handleDeleteClick}
                 onAddSubtask={handleAddSubtask}
+                todayIso={todayIso}
               />
             ))}
           </Table.Body>
