@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import type { TaskNode } from '@/lib/tree/build-task-tree';
 import { computeGridRange, todayOffsetDays } from '@/lib/gantt/grid-range';
 import { computeBarStyle } from '@/lib/gantt/compute-bar-style';
+import { isOverdue } from '@/lib/tasks/is-overdue';
 
 const WEEK_WIDTH_PX = 96;
 const DAY_WIDTH_PX = WEEK_WIDTH_PX / 7;
@@ -111,6 +112,7 @@ export function GanttBoard({ nodes, todayIso }: GanttBoardProps) {
                 { startDate: n.task.startDate, dueDate: n.task.dueDate }
               );
               const isDone = n.task.status === 'done';
+              const overdue = isOverdue(n.task, todayIso);
               return (
                 <div className="gantt-grid-row" key={n.task.id}>
                   {range.weeks.map((w, i) => (
@@ -121,7 +123,7 @@ export function GanttBoard({ nodes, todayIso }: GanttBoardProps) {
                   ))}
                   {bar ? (
                     <div
-                      className={`gantt-bar ${isDone ? 'is-done' : ''}`}
+                      className={`gantt-bar ${isDone ? 'is-done' : ''} ${overdue ? 'overdue' : ''}`}
                       style={{ left: bar.leftPx, width: bar.widthPx }}
                     >
                       <div className="gantt-bar-fill" style={{ width: `${n.task.progress}%` }} />

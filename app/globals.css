@@ -339,3 +339,4 @@ body {
 }
 .daterange.has-due-overdue .due { color: var(--danger); font-weight: 500; }
 .overdue-badge { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 6px; }
+.gantt-bar.overdue { outline: 1.5px solid var(--danger); outline-offset: 0; background-image: repeating-linear-gradient(45deg, transparent 0, transparent 5px, rgba(220,38,38,0.08) 5px, rgba(220,38,38,0.08) 10px); }
