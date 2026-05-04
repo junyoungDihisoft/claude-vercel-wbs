@@ -50,6 +50,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate DATABASE_URL port (must be 5432)
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::PRODUCTION_DATABASE_URL secret 이 비어 있습니다. production environment 설정을 확인하세요."
+            exit 1
+          fi
+          if echo "$DATABASE_URL" | grep -qE ':6543(/|$|\?)'; then
+            echo "::error::Transaction pooler(6543) URL 감지 — Direct/Session pooler(5432) URL 로 교체하세요. 마이그레이션은 5432 가 필수 (CLAUDE.md §6)."
+            exit 1
+          fi
+
       - name: Apply Drizzle migrations
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
