@@ -54,14 +54,27 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
         run: |
-          if [ -z "$DATABASE_URL" ]; then
+          if [ -z "${DATABASE_URL:-}" ]; then
             echo "::error::PRODUCTION_DATABASE_URL secret 이 비어 있습니다. production environment 설정을 확인하세요."
             exit 1
           fi
-          if echo "$DATABASE_URL" | grep -qE ':6543(/|$|\?)'; then
-            echo "::error::Transaction pooler(6543) URL 감지 — Direct/Session pooler(5432) URL 로 교체하세요. 마이그레이션은 5432 가 필수 (CLAUDE.md §6)."
-            exit 1
-          fi
+          # postgresql://user:pw@host:PORT/db?... 에서 PORT만 추출 (평문 echo 없이 parameter expansion)
+          hostport="${DATABASE_URL#*://}"
+          hostport="${hostport#*@}"
+          hostport="${hostport%%/*}"
+          hostport="${hostport%%\?*}"
+          port="${hostport##*:}"
+          case "$port" in
+            5432) : ;;
+            6543)
+              echo "::error::Transaction pooler(6543) URL 감지 — Direct/Session pooler(5432) 로 교체하세요. 마이그레이션은 5432 가 필수 (CLAUDE.md §6)."
+              exit 1
+              ;;
+            *)
+              echo "::error::비표준 또는 누락된 포트($port) 감지 — Direct/Session pooler(5432) 만 허용 (CLAUDE.md §6)."
+              exit 1
+              ;;
+          esac
 
       - name: Apply Drizzle migrations
         env:
