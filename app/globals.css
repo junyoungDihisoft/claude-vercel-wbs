@@ -340,3 +340,14 @@ body {
 .daterange.has-due-overdue .due { color: var(--danger); font-weight: 500; }
 .overdue-badge { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 6px; }
 .gantt-bar.overdue { outline: 1.5px solid var(--danger); outline-offset: 0; background-image: repeating-linear-gradient(45deg, transparent 0, transparent 5px, rgba(220,38,38,0.08) 5px, rgba(220,38,38,0.08) 10px); }
+
+/* Page header + stats strip (SPEC §9 I-1~I-5) */
+.page-header { margin-bottom: 8px; }
+.page-header__title { font-size: 1.5rem; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+.page-meta { font-size: 0.875rem; color: var(--text-muted); margin: 0 0 16px; }
+.page-meta__overdue { color: var(--danger); font-weight: 500; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; box-shadow: var(--shadow-sm); }
+.stat__label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.stat__value { font-size: 1.25rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.stat__sub { font-size: 0.75rem; color: var(--text-faint); margin-top: 2px; min-height: 1em; }

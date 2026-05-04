@@ -44,7 +44,7 @@ test.describe('J20 — overdue 작업 존재 시 메타 강조 표시', () => {
     // 방금 완료한 작업은 더 이상 overdue 아님. 만약 다른 overdue 작업이 없으면 토큰 미노출.
     // DB 공유 환경이므로 "지남" 토큰이 0개가 됨을 단정하기 어렵지만,
     // 최소한 페이지가 정상 렌더(크래시 없이 WBS 제목 노출)되는지 확인.
-    await expect(page.getByRole('heading', { name: 'WBS' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'WBS' })).toBeVisible();
     await expect(page.getByText(/개 작업/)).toBeVisible();
   });
 });

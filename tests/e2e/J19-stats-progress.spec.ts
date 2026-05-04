@@ -27,8 +27,8 @@ test.describe('J19 — stats 카드 구조 및 진척률 표시', () => {
     await doingRow.getByRole('button', { name: '할 일' }).click();
     await expect(doingRow.getByText('진행 중')).toBeVisible();
 
-    // I-1: WBS 제목 노출
-    await expect(page.getByRole('heading', { name: 'WBS' })).toBeVisible();
+    // I-1: WBS 제목 노출 — PageHeader는 h2 (h1 은 AppHeader 브랜드)
+    await expect(page.getByRole('heading', { level: 2, name: 'WBS' })).toBeVisible();
 
     // I-2: 메타 한 줄 "n개 작업" 노출
     await expect(page.getByText(/개 작업/)).toBeVisible();
