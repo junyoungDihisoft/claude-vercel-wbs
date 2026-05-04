@@ -29,11 +29,19 @@ jobs:
       - name: Install actionlint
         env:
           ACTIONLINT_VERSION: "1.7.5"
+          # rhysd/actionlint v1.7.5 actionlint_1.7.5_linux_amd64.tar.gz SHA-256.
+          # 갱신 시 사람이 `gh release download <ver> -R rhysd/actionlint -p actionlint_<ver>_checksums.txt`
+          # 로 직접 검증 후 박는다 (in-patch SHA → git blame 에 검증 증적).
+          ACTIONLINT_SHA256: "3e6e0a832dfa0b5f027e6b8956aad2632d69b7cb778b1cff847b40279950a856"
         run: |
-          curl -sSL \
-            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
-            | tar -xz -C /tmp actionlint
-          /tmp/actionlint -version
+          set -euo pipefail
+          cd /tmp
+          curl -fsSL --retry 3 --retry-delay 2 -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          rm actionlint.tar.gz
+          ./actionlint -version
 
       - name: Lint GitHub Actions workflows
         run: /tmp/actionlint -color
