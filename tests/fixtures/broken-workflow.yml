@@ -1,0 +1,10 @@
+# 의도적으로 깨진 워크플로우. tests/contract/actionlint-binary.test.ts 의 fixture.
+# 절대 수정 금지 — actionlint 가 실제로 오류를 잡는다는 것을 회귀 가드로 단언하기 위한 파일.
+# `${{ typo.invalid_context }}` 가 actionlint 의 알려지지 않은 context 룰에 잡혀야 함.
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo ${{ typo.invalid_context }}
