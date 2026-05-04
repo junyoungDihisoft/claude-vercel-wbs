@@ -71,7 +71,7 @@
 
 4. **두 문서는 모두 한국어 자연어로 유지**한다. SQL·필드명·컴포넌트 이름·프레임워크 API 등 구현 어휘는 `SPEC.md`/`USER_JOURNEY.md`에 들어가지 않는다. 그런 어휘가 필요하면 이 `CLAUDE.md` 또는 코드 주석으로 간다.
 
-5. `SPEC.md`의 **"9. 범위 밖"** 섹션은 §10 금기사항의 "과제 범위 밖 기능" 기준으로 작동한다. 범위 밖 항목을 범위 안으로 옮기려면 `SPEC.md`부터 수정.
+5. `SPEC.md`의 **"11. 범위 밖"** 섹션은 §10 금기사항의 "과제 범위 밖 기능" 기준으로 작동한다. 범위 밖 항목을 범위 안으로 옮기려면 `SPEC.md`부터 수정.
 
 ## 2. 기술 스택 (고정)
 
@@ -250,7 +250,7 @@ export default defineConfig({
 - ❌ `supabase migration new`, `supabase db push`, `supabase db reset` 을 사용하지 않는다 — Supabase CLI는 로컬 컨테이너 기동 용도로만.
 - ❌ Transaction pooler(6543) 문자열로 마이그레이션을 실행하지 않는다 (prepared statement 실패). 마이그레이션은 Direct 또는 Session pooler(5432).
 - ❌ UI 라이브러리를 섞지 않는다(Chakra UI v3만). Tailwind 클래스, shadcn 컴포넌트 등을 끌어오지 않는다.
-- ❌ `SPEC.md`의 **"9. 범위 밖"** 에 적힌 기능(다중 사용자, Task 의존성/선후행, 크리티컬 패스, 간트 드래그 편집, 실시간 알림 등)을 사용자에게 확인 없이 추가하지 않는다. 범위 변경이 필요하면 `SPEC.md`를 먼저 고친다.
+- ❌ `SPEC.md`의 **"11. 범위 밖"** 에 적힌 기능(다중 사용자, Task 의존성/선후행, 크리티컬 패스, 간트 드래그 편집, 실시간 알림 등)을 사용자에게 확인 없이 추가하지 않는다. 범위 변경이 필요하면 `SPEC.md`를 먼저 고친다.
 - ❌ 별도 백엔드 서버(Express/Fastify/NestJS 등)를 세우지 않는다. 서버 로직은 Next.js Route Handler / Server Action 안에.
 
 ## 11. 저장소 파일 인덱스 (빠른 참조)
