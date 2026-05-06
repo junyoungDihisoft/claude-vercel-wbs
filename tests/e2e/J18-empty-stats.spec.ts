@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// SPEC §9 I-5 "0개 작업 + overdue 미노출" 의 결정론적 보장은
+// tests/unit/page-meta.test.tsx 와 tests/unit/compute-stats.test.ts 가 단위 수준에서 담당한다.
+// 여기서는 공유 e2e DB 한계를 감안해 4칸 카드 구조 노출만 확인한다.
 test.describe('J18 — 빈 상태에서 페이지 헤더 / stats 카드 표시', () => {
   test('task 없이 / 진입 시 WBS 제목 + 오늘 메타 + 4칸 카드(모두 0) 노출, "지남" 토큰 미노출', async ({
     page,
